@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8
+    container_name: mysql-container
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: productdb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: userpassword
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - mysql-network
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '--silent']
+      interval: 10s
+      retries: 3
+      start_period: 10s
+      timeout: 10s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: node-app
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_HOST: mysql
+      DATABASE_PORT: 3306
+      DATABASE_USER: user
+      DATABASE_PASSWORD: userpassword
+      DATABASE_NAME: productdb
+    networks:
+      - mysql-network
+
+volumes:
+  mysql-data:
+    driver: local
+
+networks:
+  mysql-network:
+    driver: bridge
