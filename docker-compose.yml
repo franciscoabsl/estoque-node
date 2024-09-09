@@ -14,7 +14,7 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
     networks:
-      - mysql-network
+      - my-network
     healthcheck:
       test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '--silent']
       interval: 10s
@@ -26,7 +26,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: node-app
+    container_name: app
     depends_on:
       mysql:
         condition: service_healthy
@@ -39,12 +39,24 @@ services:
       DATABASE_PASSWORD: userpassword
       DATABASE_NAME: productdb
     networks:
-      - mysql-network
+      - my-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - '3001:80'
+    depends_on:
+      - app
+    networks:
+      - my-network
 
 volumes:
   mysql-data:
     driver: local
 
 networks:
-  mysql-network:
+  my-network:
     driver: bridge
